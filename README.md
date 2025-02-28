@@ -25,7 +25,7 @@ Sichuan University, Chengdu, China
 
 <div align="center">
 <p2>The Path Towards Relightable Portrait Animation</p2>
-<img src="assets/magma_teaser.png?raw=true" width="100%">
+<img src="assets/intro.png?raw=true" width="80%">
 </div>
 </div>
 
