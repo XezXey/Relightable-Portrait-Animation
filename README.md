@@ -7,11 +7,11 @@
 
 
 <sup>1</sup> National Key Laboratory of Fundamental Science on Synthetic Vision,
-Sichuan University, Chengdu, China, 610065 
+Sichuan University, Chengdu, China 
 
-<sup>2</sup> College of Computer Science, Sichuan University, Chengdu, China, 610065 
+<sup>2</sup> College of Computer Science, Sichuan University, Chengdu, China 
 
-<sup>†</sup> First author  <sup>‡</sup> Second author  <sup>▽</sup> corresponding author  
+<sup>†</sup> First author  <sup>‡</sup> Second author  <sup>▽</sup> Corresponding author  
 
 <h3 style="color:#b22222;"> To Appear at CVPR 2025 </h3>
 
