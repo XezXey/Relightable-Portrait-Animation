@@ -73,7 +73,7 @@ mv relightable-portrait-animation/unet.pth pretrained_weights/relipa
 mv relightable-portrait-animation/data src/decalib
 mv relightable-portrait-animation/u2net_human_seg.pth src/facematting
 
-git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid
+git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt
 mv stable-video-diffusion-img2vid pretrained_weights
 
 git clone https://huggingface.co/stabilityai/sd-vae-ft-mse
@@ -92,7 +92,7 @@ Finally, these weights should be orgnized as follows:
 |-- sd-vae-ft-mse
 |   |-- config.json
 |   |-- diffusion_pytorch_model.bin
-|-- stable-video-diffusion-img2vid
+|-- stable-video-diffusion-img2vid-xt
     |-- feature_extractor
     |   |-- preprocessor_config.json
     |-- scheduler
@@ -117,10 +117,10 @@ Here's the command to run preprocess scripts: Use DECA to extract the pose from 
 python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_path resources/reference.png --light_path resources/target_lighting1.png --save_path resources/shading.mp4 --motion_align relative
 ```
 
-Here's the command to run inference scripts:
+Here's the command to run inference scripts: Guide our model with the shading hints obtained from preprocessing to generate results where the pose is consistent with that of the driving video, the identity is consistent with the reference image, and the lighting is consistent with the target lighting. 
 
 ```shell
-python -m scripts.pose2vid --config ./configs/prompts/animation.yaml -W 512 -H 784 -L 64
+python inference.py --pretrained_model_name_or_path pretrained_weights/stable-video-diffusion-img2vid-xt --checkpoint_path pretrained_weights/relipa/ --video_path resources/shading.mp4 --save_path result.mp4 --guidance 4.5 --inference_steps 25 --driving_mode relighting
 ```
 
 ## Citation
