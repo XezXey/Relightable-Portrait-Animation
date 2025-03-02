@@ -116,7 +116,9 @@ Here's the command to run preprocess scripts: Use DECA to extract the pose from 
 ```shell
 python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_path resources/reference.png --light_path resources/target_lighting1.png --save_path resources/shading.mp4 --motion_align relative
 ```
-[点击查看视频](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/shading.mp4)
+
+1. Reference, 2. Mask, 3. Driving image, 4. Landmark, 5. Shading hints 
+![](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/shading.png)
 
 Here's the command to run inference scripts: Guide our model with the shading hints obtained from preprocessing to generate results where the pose is consistent with that of the driving video, the identity is consistent with the reference image, and the lighting is consistent with the target lighting. 
 
@@ -124,6 +126,8 @@ Here's the command to run inference scripts: Guide our model with the shading hi
 python inference.py --pretrained_model_name_or_path pretrained_weights/stable-video-diffusion-img2vid-xt --checkpoint_path pretrained_weights/relipa/ --video_path resources/shading.mp4 --save_path result.mp4 --guidance 4.5 --inference_steps 25 --driving_mode relighting
 ```
 
+1. Reference, 2. Shading hints, 3. Relighting result, 4. Driving image
+![](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/relighting.png)
 ## Citation
 If you use this model in your research, please consider citing:
 
