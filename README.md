@@ -61,10 +61,17 @@ pip install -r requirements.txt
 ## Download weights
 ```shell
 mkdir pretrained_weights
+mkdir pretrained_weights/relipa
 git-lfs install
 
 git clone https://huggingface.co/MartinGuo/relightable-portrait-animation
-mv relightable-portrait-animation pretrained_weights/relipa
+mv relightable-portrait-animation/ref_embedder.pth pretrained_weights/relipa
+mv relightable-portrait-animation/light_embedder.pth pretrained_weights/relipa
+mv relightable-portrait-animation/head_embedder.pth pretrained_weights/relipa
+mv relightable-portrait-animation/unet.pth pretrained_weights/relipa
+
+mv relightable-portrait-animation/data src/decalib
+mv relightable-portrait-animation/u2net_human_seg.pth src/facematting
 
 git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid
 mv stable-video-diffusion-img2vid pretrained_weights
@@ -99,6 +106,15 @@ Finally, these weights should be orgnized as follows:
     |   |-- config.json
     |   |-- model.safetensors
     |   |-- model.fp16.safetensors
+```
+# 🚀 Training and Inference 
+
+## Inference of Relightable Portrait Animation
+
+Here's the command to run inference scripts:
+
+```shell
+python -m scripts.pose2vid --config ./configs/prompts/animation.yaml -W 512 -H 784 -L 64
 ```
 
 ## Citation
