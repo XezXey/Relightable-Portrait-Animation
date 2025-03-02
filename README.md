@@ -58,7 +58,39 @@ conda activate relipa
 ```bash
 pip install -r requirements.txt
 ```
+## Download weights
+```shell
+git-lfs install
+git clone https://huggingface.co/MartinGuo/relightable-portrait-animation
+```
+The weights will be put in the `./pretrained_weights` directory. Heads up! The whole downloading process could take quite a long time.
+Finally, these weights should be orgnized as follows:
 
+```text
+./pretrained_weights/
+|-- relipa
+|   |-- unet.pth
+|   |-- ref_embedder.pth
+|   |-- light_embedder.pth
+|   |-- head_embedder.pth
+|-- sd-vae-ft-mse
+|   |-- config.json
+|   |-- diffusion_pytorch_model.bin
+|-- stable-video-diffusion-img2vid
+    |-- feature_extractor
+    |   |-- preprocessor_config.json
+    |-- scheduler
+    |   |-- scheduler_config.json
+    |-- model_index.json
+    |-- unet
+    |   |-- config.json
+    |   |-- diffusion_pytorch_model.safetensors
+    |   |-- diffusion_pytorch_model.fp16.safetensors
+    |-- image_encoder
+    |   |-- config.json
+    |   |-- model.safetensors
+    |   |-- model.fp16.safetensors
+```
 
 ## Citation
 If you use this model in your research, please consider citing:
