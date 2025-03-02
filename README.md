@@ -60,8 +60,13 @@ pip install -r requirements.txt
 ```
 ## Download weights
 ```shell
+mkdir pretrained_weights
 git-lfs install
 git clone https://huggingface.co/MartinGuo/relightable-portrait-animation
+mv relightable-portrait-animation pretrained_weights/relipa
+
+git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid
+mv stable-video-diffusion-img2vid pretrained_weights
 ```
 The weights will be put in the `./pretrained_weights` directory. Heads up! The whole downloading process could take quite a long time.
 Finally, these weights should be orgnized as follows:
