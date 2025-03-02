@@ -1,5 +1,5 @@
 <div align="center">
-<h2>🤖 High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model</h2>
+<h2>High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model</h2>
 
 [Mingtao Guo]()<sup>1</sup><sup>†</sup>&nbsp;
 [Guanyu Xing]()<sup>1</sup><sup>‡</sup>&nbsp;
