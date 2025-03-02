@@ -77,7 +77,7 @@ git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt
 mv stable-video-diffusion-img2vid-xt pretrained_weights
 
 git clone https://huggingface.co/stabilityai/sd-vae-ft-mse
-mv sd-vae-ft-mse pretrained_weights
+mv sd-vae-ft-mse pretrained_weights/stable-video-diffusion-img2vid-xt
 ```
 The weights will be put in the `./pretrained_weights` directory. Heads up! The whole downloading process could take quite a long time.
 Finally, these weights should be orgnized as follows:
@@ -89,10 +89,10 @@ Finally, these weights should be orgnized as follows:
 |   |-- ref_embedder.pth
 |   |-- light_embedder.pth
 |   |-- head_embedder.pth
-|-- sd-vae-ft-mse
-|   |-- config.json
-|   |-- diffusion_pytorch_model.bin
 |-- stable-video-diffusion-img2vid-xt
+    |-- sd-vae-ft-mse
+    |   |-- config.json
+    |   |-- diffusion_pytorch_model.bin
     |-- feature_extractor
     |   |-- preprocessor_config.json
     |-- scheduler
