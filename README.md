@@ -29,12 +29,13 @@ Sichuan University, Chengdu, China
 </div>
 
 ## :fire: News
+* **[2025.03.02]** Releasing pre-trained model on [HuggingFace](https://huggingface.co/MartinGuo/relightable-portrait-animation)!
 * **[2025.02.27]** ⭐ Exciting News! Relightable-Portrait-Animation got accepted by CVPR 2025!
 
 ## :bookmark_tabs: Todos
 We are going to make all the following contents available:
-- [ ] Model inference code
-- [ ] Model checkpoint
+- [x] Model inference code
+- [x] Model checkpoint
 - [ ] Training code
 
 
