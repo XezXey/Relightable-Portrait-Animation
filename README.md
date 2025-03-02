@@ -29,7 +29,7 @@ Sichuan University, Chengdu, China
 </div>
 
 ## :fire: News
-* **[2025.03.02]** Releasing pre-trained model on [HuggingFace](https://huggingface.co/MartinGuo/relightable-portrait-animation)!
+* **[2025.03.02]** Our pre-trained model is out on [HuggingFace](https://huggingface.co/MartinGuo/relightable-portrait-animation)!
 * **[2025.02.27]** ⭐ Exciting News! Relightable-Portrait-Animation got accepted by CVPR 2025!
 
 ## :bookmark_tabs: Todos
