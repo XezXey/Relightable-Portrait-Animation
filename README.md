@@ -111,6 +111,12 @@ Finally, these weights should be orgnized as follows:
 
 ## Inference of Relightable Portrait Animation
 
+Here's the command to run preprocess scripts: Use DECA to extract the pose from the driving video and the mesh from the reference portrait, then render shading hints by combining the driving video's pose, the reference portrait's mesh, and the target lighting.
+
+```shell
+python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_path resources/reference.png --light_path resources/target_lighting1.png --save_path resources/shading.mp4 --motion_align relative
+```
+
 Here's the command to run inference scripts:
 
 ```shell
