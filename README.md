@@ -74,7 +74,7 @@ mv relightable-portrait-animation/data src/decalib
 mv relightable-portrait-animation/u2net_human_seg.pth src/facematting
 
 git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt
-mv stable-video-diffusion-img2vid pretrained_weights
+mv stable-video-diffusion-img2vid-xt pretrained_weights
 
 git clone https://huggingface.co/stabilityai/sd-vae-ft-mse
 mv sd-vae-ft-mse pretrained_weights
