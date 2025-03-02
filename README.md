@@ -38,6 +38,27 @@ We are going to make all the following contents available:
 - [x] Model checkpoint
 - [ ] Training code
 
+## Installation
+
+1. Clone this repo locally:
+
+```bash
+git clone https://github.com/MingtaoGuo/relightable-portrait-animation
+cd relightable-portrait-animation
+```
+2. Install the dependencies:
+
+```bash
+conda create -n relipa python=3.8 -y
+conda activate relipa
+```
+
+3. Install packages for inference:
+
+```bash
+pip install -r requirements.txt
+```
+
 
 ## Citation
 If you use this model in your research, please consider citing:
