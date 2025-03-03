@@ -17,7 +17,7 @@ Sichuan University, Chengdu, China
 
 <h4>
 <a href="https://arxiv.org/abs/2502.19894">📄 arXiv Paper</a> &nbsp; 
-<a href="">🌐 Project Page</a> &nbsp; 
+<a href="https://mingtaoguo.github.io/">🌐 Project Page</a> &nbsp; 
 <a href="">📺 Video</a>
 </h4>
 
