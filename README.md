@@ -126,6 +126,8 @@ After running ```inference.py``` you'll get the results:
 
 1. Reference, 2. Shading hints, 3. Relighting result, 4. Driving image
 ![](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/relighting.png)
+# Acknowledgements
+We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models), [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
 ## Citation
 If you use this model in your research, please consider citing:
 
@@ -140,8 +142,6 @@ If you use this model in your research, please consider citing:
       url={https://arxiv.org/abs/2502.19894}, 
 }
 ```
-# Acknowledgements
-We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models) and [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
