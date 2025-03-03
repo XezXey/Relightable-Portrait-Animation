@@ -29,7 +29,7 @@ Sichuan University, Chengdu, China
 </div>
 
 ## :fire: News
-* **[2025.03.02]** Our pre-trained model is out on [HuggingFace](https://huggingface.co/MartinGuo/relightable-portrait-animation)!
+* **[2025.03.02]** Our pre-trained model is out on [HuggingFace](https://huggingface.co/MartinGuo/Relightable-Portrait-Animation)!
 * **[2025.02.27]** ⭐ Exciting News! Relightable-Portrait-Animation got accepted by CVPR 2025!
 
 ## :bookmark_tabs: Todos
@@ -43,8 +43,8 @@ We are going to make all the following contents available:
 1. Clone this repo locally:
 
 ```bash
-git clone https://github.com/MingtaoGuo/relightable-portrait-animation
-cd relightable-portrait-animation
+git clone https://github.com/MingtaoGuo/Relightable-Portrait-Animation
+cd Relightable-Portrait-Animation
 ```
 2. Install the dependencies:
 
@@ -66,14 +66,14 @@ mkdir pretrained_weights
 mkdir pretrained_weights/relipa
 git-lfs install
 
-git clone https://huggingface.co/MartinGuo/relightable-portrait-animation
-mv relightable-portrait-animation/ref_embedder.pth pretrained_weights/relipa
-mv relightable-portrait-animation/light_embedder.pth pretrained_weights/relipa
-mv relightable-portrait-animation/head_embedder.pth pretrained_weights/relipa
-mv relightable-portrait-animation/unet.pth pretrained_weights/relipa
+git clone https://huggingface.co/MartinGuo/Relightable-Portrait-Animation
+mv Relightable-Portrait-Animation/ref_embedder.pth pretrained_weights/relipa
+mv Relightable-Portrait-Animation/light_embedder.pth pretrained_weights/relipa
+mv Relightable-Portrait-Animation/head_embedder.pth pretrained_weights/relipa
+mv Relightable-Portrait-Animation/unet.pth pretrained_weights/relipa
 
-mv relightable-portrait-animation/data src/decalib
-mv relightable-portrait-animation/u2net_human_seg.pth src/facematting
+mv Relightable-Portrait-Animation/data src/decalib
+mv Relightable-Portrait-Animation/u2net_human_seg.pth src/facematting
 
 git clone https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt
 mv stable-video-diffusion-img2vid-xt pretrained_weights
@@ -122,7 +122,7 @@ python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_
 After running ```preprocess.py``` you'll get the results: 
 
 1. Reference, 2. Mask, 3. Driving image, 4. Landmark, 5. Shading hints 
-![](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/shading.png)
+![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/shading.png)
 
 Here's the command to run inference scripts: Guide our model with the shading hints obtained from preprocessing to generate results where the pose is consistent with that of the driving video, the identity is consistent with the reference image, and the lighting is consistent with the target lighting. 
 
@@ -133,7 +133,7 @@ python inference.py --pretrained_model_name_or_path pretrained_weights/stable-vi
 After running ```inference.py``` you'll get the results: 
 
 1. Reference, 2. Shading hints, 3. Relighting result, 4. Driving image
-![](https://github.com/MingtaoGuo/relightable-portrait-animation/blob/main/assets/relighting.png)
+![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/relighting.png)
 # Acknowledgements
 We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models), [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
 ## Citation
