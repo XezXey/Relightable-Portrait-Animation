@@ -52,7 +52,7 @@ cd relightable-portrait-animation
 conda create -n relipa python=3.8
 conda activate relipa
 ```
-3. Install packages for inference
+3. Install packages for inference:
 
 ```bash
 pip install -r requirements.txt
