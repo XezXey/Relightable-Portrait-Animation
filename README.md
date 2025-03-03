@@ -49,14 +49,8 @@ cd relightable-portrait-animation
 2. Install the dependencies:
 
 ```bash
-conda create -n relipa python=3.8 -y
+conda env create -f relipa.yaml
 conda activate relipa
-```
-
-3. Install packages for inference:
-
-```bash
-pip install -r requirements.txt
 ```
 ## Download weights
 ```shell
