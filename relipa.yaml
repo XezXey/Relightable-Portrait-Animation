@@ -123,4 +123,3 @@ dependencies:
       - urllib3==2.2.3
       - yacs==0.1.8
       - zipp==3.20.2
-prefix: /home/cvlab/anaconda3/envs/relipa
