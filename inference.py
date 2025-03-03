@@ -173,8 +173,8 @@ class RelightablePA():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pretrained_model_name_or_path", type=str, default="../../stable-video-diffusion-img2vid-xt", help="stable video diffusion pretrained model path") 
-    parser.add_argument("--checkpoint_path", type=str, default="outputs/checkpoint-29000", help="relightable portrait animation checkpoint path") 
+    parser.add_argument("--pretrained_model_name_or_path", type=str, default="pretrained_weights/stable-video-diffusion-img2vid-xt", help="stable video diffusion pretrained model path") 
+    parser.add_argument("--checkpoint_path", type=str, default="pretrained_weights/relipa", help="relightable portrait animation checkpoint path") 
     parser.add_argument("--video_path", type=str, default="resources/shading.mp4", help="reference and shading") 
     parser.add_argument("--save_path", type=str, default="result.mp4", help="result save path")
     parser.add_argument("--guidance", type=float, default=4.5, help="lighting intensity")
