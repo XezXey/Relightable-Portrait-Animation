@@ -1,11 +1,5 @@
 name: relipa
 channels:
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
@@ -98,7 +92,6 @@ dependencies:
       - pycparser==2.22
       - pyparsing==3.1.4
       - python-dateutil==2.9.0.post0
-      - pytorch3d==0.7.7+pt2.2.2cu121
       - pywavelets==1.4.1
       - pyyaml==6.0.2
       - regex==2024.11.6
