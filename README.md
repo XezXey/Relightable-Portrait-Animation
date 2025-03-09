@@ -149,27 +149,27 @@ python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-
 ## Talking Head Video Dataset
 |VFHQ-video|VFHQ-kpmap|VFHQ-mesh|VFHQ-mask|
 |-|-|-|-|
-|||||
+|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/video.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/kpmap.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/mesh.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/maskdd.png)|
 
 Training dataset
 ```text
 ./TalkingHeadVideo/
-|-- VFHQ
-    |-- VFHQ-mask
-        |-- Clip+zZEv-ATOpoY+P0+C2+F3168-3532_10369.mp4
-         ...
-    |-- VFHQ-kpmap
-    |-- VFHQ-video
-    |-- VFHQ-mesh
-    VFHQ-data-consistent.json
-|-- CelebV-HQ
-    |-- CelebV-HQ-mask
-        |-- __lRwnjxeCg_1.mp4
-         ...
-    |-- CelebV-HQ-kpmap
-    |-- CelebV-HQ-video
-    |-- CelebV-HQ-mesh
-    CelebV-HQ-data-consistent.json
+    |-- VFHQ
+        |-- VFHQ-mask
+            |-- Clip+zZEv-ATOpoY+P0+C2+F3168-3532_10369.mp4
+             ...
+        |-- VFHQ-kpmap
+        |-- VFHQ-video
+        |-- VFHQ-mesh
+        VFHQ-data-consistent.json
+    |-- CelebV-HQ
+        |-- CelebV-HQ-mask
+            |-- __lRwnjxeCg_1.mp4
+             ...
+        |-- CelebV-HQ-kpmap
+        |-- CelebV-HQ-video
+        |-- CelebV-HQ-mesh
+        CelebV-HQ-data-consistent.json
 ```
 # Acknowledgements
 We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models), [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
