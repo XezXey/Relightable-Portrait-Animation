@@ -141,9 +141,29 @@ After running ```inference.py``` you'll get the results:
 ```shell
 python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-diffusion-img2vid-xt \
                 --height 512 --width 512  --num_frames 16 --validation_steps 100 --max_train_steps 30000 \
-                --gradient_accumulation_steps 1 --gradient_checkpointing True --learning_rate 1e-5 --use_8bit_adam True \
+                --gradient_accumulation_steps 8 --gradient_checkpointing True --learning_rate 1e-5 --use_8bit_adam True \
                 --sample_rate 4 --num_workers 2 --checkpointing_steps 1000 --checkpoints_total_limit 2 \
                 --data_meta_path TalkingHeadVideo/VFHQ/VFHQ-data-consistent.json
+```
+Training dataset
+```text
+./TalkingHeadVideo/
+|-- VFHQ
+    |-- VFHQ-mask
+        |-- Clip+zZEv-ATOpoY+P0+C2+F3168-3532_10369.mp4
+         ...
+    |-- VFHQ-kpmap
+    |-- VFHQ-video
+    |-- VFHQ-mesh
+    VFHQ-data-consistent.json
+|-- CelebV-HQ
+    |-- CelebV-HQ-mask
+        |-- __lRwnjxeCg_1.mp4
+         ...
+    |-- CelebV-HQ-kpmap
+    |-- CelebV-HQ-video
+    |-- CelebV-HQ-mesh
+    CelebV-HQ-data-consistent.json
 ```
 # Acknowledgements
 We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models), [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
