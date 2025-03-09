@@ -39,7 +39,8 @@ Sichuan University, Chengdu, China
 We are going to make all the following contents available:
 - [x] Model inference code
 - [x] Model checkpoint
-- [ ] Training code
+- [x] Training code
+- [ ] Data processing code
 
 ## Installation
 
@@ -137,7 +138,7 @@ After running ```inference.py``` you'll get the results:
 
 1. Reference, 2. Shading hints, 3. Relighting result, 4. Driving image
 ![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/relighting.png)
-## Training Stage 
+## Training of the Relightable Portrait Animation 
 ```shell
 python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-diffusion-img2vid-xt \
                 --height 512 --width 512  --num_frames 16 --validation_steps 100 --max_train_steps 30000 \
@@ -145,6 +146,11 @@ python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-
                 --sample_rate 4 --num_workers 2 --checkpointing_steps 1000 --checkpoints_total_limit 2 \
                 --data_meta_path TalkingHeadVideo/VFHQ/VFHQ-data-consistent.json
 ```
+## Talking Head Video Dataset
+|VFHQ-video|VFHQ-kpmap|VFHQ-mesh|VFHQ-mask|
+|-|-|-|-|
+|||||
+
 Training dataset
 ```text
 ./TalkingHeadVideo/
