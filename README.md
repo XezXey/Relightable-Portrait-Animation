@@ -2,14 +2,17 @@
 <h2>High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model</h2>
 
 [Mingtao Guo]()<sup>1</sup><sup>†</sup>&nbsp;
-[Guanyu Xing]()<sup>1</sup><sup>‡</sup>&nbsp;
-[Yanli Liu]()<sup>1,2</sup><sup>▽</sup>&nbsp;
+[Guanyu Xing]()<sup>2</sup><sup>‡</sup>&nbsp;
+[Yanli Liu]()<sup>1,3</sup><sup>▽</sup>&nbsp;
 
 
 <sup>1</sup> National Key Laboratory of Fundamental Science on Synthetic Vision,
 Sichuan University, Chengdu, China 
 
-<sup>2</sup> College of Computer Science, Sichuan University, Chengdu, China 
+<sup>2</sup> School of Cyber Science and Engineering, 
+Sichuan University, Chengdu, China 
+
+<sup>3</sup> College of Computer Science, Sichuan University, Chengdu, China 
 
 <sup>†</sup> First author  <sup>‡</sup> Second author  <sup>▽</sup> Corresponding author  
 
