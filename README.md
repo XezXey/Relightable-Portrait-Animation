@@ -114,7 +114,7 @@ Finally, these weights should be orgnized as follows:
 ```
 # 🚀 Training and Inference 
 
-## Inference of Relightable Portrait Animation
+## Inference of the Relightable Portrait Animation
 
 Here's the command to run preprocess scripts: Use DECA to extract the pose from the driving video and the mesh from the reference portrait, then render shading hints by combining the driving video's pose, the reference portrait's mesh, and the target lighting.
 
@@ -137,6 +137,14 @@ After running ```inference.py``` you'll get the results:
 
 1. Reference, 2. Shading hints, 3. Relighting result, 4. Driving image
 ![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/relighting.png)
+## Training Stage 
+```shell
+python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-diffusion-img2vid-xt \
+                --height 512 --width 512  --num_frames 16 --validation_steps 100 --max_train_steps 30000 \
+                --gradient_accumulation_steps 1 --gradient_checkpointing True --learning_rate 1e-5 --use_8bit_adam True \
+                --sample_rate 4 --num_workers 2 --checkpointing_steps 1000 --checkpoints_total_limit 2 \
+                --data_meta_path TalkingHeadVideo/VFHQ/VFHQ-data-consistent.json
+```
 # Acknowledgements
 We first thank to the contributors to the [StableVideoDiffusion](https://github.com/Stability-AI/generative-models), [Echomimic](https://github.com/antgroup/echomimic) and [MimicMotion](https://github.com/Tencent/MimicMotion) repositories, for their open research and exploration. Furthermore, our repo incorporates some codes from [DECA](https://github.com/yfeng95/DECA), [MediaPipe](https://github.com/google-ai-edge/mediapipe) and [U2Net](https://github.com/xuebinqin/U-2-Net), and we extend our thanks to them as well.
 ## Citation
