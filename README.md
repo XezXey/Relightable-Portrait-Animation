@@ -53,6 +53,8 @@ cd Relightable-Portrait-Animation
 ```bash
 conda create -n relipa python=3.8
 conda activate relipa
+
+sudo apt install ffmpeg
 ```
 3. Install packages for inference:
 
