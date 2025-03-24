@@ -1,9 +1,9 @@
 <div align="center">
 <h2>High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model</h2>
 
-[Mingtao Guo]()<sup>1</sup><sup>†</sup>&nbsp;
-[Guanyu Xing]()<sup>2</sup><sup>‡</sup>&nbsp;
-[Yanli Liu]()<sup>1,3</sup><sup>▽</sup>&nbsp;
+[Mingtao Guo]()<sup>1</sup>&nbsp;
+[Guanyu Xing]()<sup>2</sup>&nbsp;
+[Yanli Liu]()<sup>1,3</sup>&nbsp;
 
 
 <sup>1</sup> National Key Laboratory of Fundamental Science on Synthetic Vision,
@@ -13,8 +13,6 @@ Sichuan University, Chengdu, China
 Sichuan University, Chengdu, China 
 
 <sup>3</sup> College of Computer Science, Sichuan University, Chengdu, China 
-
-<sup>†</sup> First author  <sup>‡</sup> Second author  <sup>▽</sup> Corresponding author  
 
 <h3 style="color:#b22222;"> To Appear at CVPR 2025 </h3>
 
@@ -40,7 +38,7 @@ We are going to make all the following contents available:
 - [x] Model inference code
 - [x] Model checkpoint
 - [x] Training code
-- [ ] Data processing code
+- [x] Data processing code
 
 ## Installation
 
@@ -151,7 +149,25 @@ python train.py --pretrained_model_name_or_path pretrained_weights/stable-video-
 |-|-|-|-|
 |![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/video.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/kpmap.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/mesh.png)|![](https://github.com/MingtaoGuo/Relightable-Portrait-Animation/blob/main/assets/maskdd.png)|
 
-Training dataset
+Making a training dataset for VFHQ
+```text
+    |-- VFHQ
+        |-- Clip+zZEv-ATOpoY+P0+C2+F3168-3532_10369.mp4
+        ...
+```
+```shell
+python make_dataset.py --video_path ./VFHQ --save_path ./TalkingHeadVideo --dataset VFHQ
+```
+Making a training dataset for CelebV-HQ
+```text
+    |-- CelebV-HQ
+        |-- __lRwnjxeCg_1.mp4
+        ...
+```
+```shell
+python make_dataset.py --video_path ./CelebV-HQ --save_path ./TalkingHeadVideo --dataset CelebV-HQ
+```
+
 ```text
 ./TalkingHeadVideo/
     |-- VFHQ
