@@ -167,7 +167,7 @@ Making a training dataset for CelebV-HQ
 ```shell
 python make_dataset.py --video_path ./CelebV-HQ --save_path ./TalkingHeadVideo --dataset CelebV-HQ
 ```
-
+Final dataset format
 ```text
 ./TalkingHeadVideo/
     |-- VFHQ
