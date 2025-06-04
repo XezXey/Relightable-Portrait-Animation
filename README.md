@@ -193,14 +193,13 @@ We first thank to the contributors to the [StableVideoDiffusion](https://github.
 If you use this model in your research, please consider citing:
 
 ```bibtex
-@misc{guo2025highfidelityrelightablemonocularportrait,
-      title={High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model}, 
-      author={Mingtao Guo and Guanyu Xing and Yanli Liu},
-      year={2025},
-      eprint={2502.19894},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2502.19894}, 
+@InProceedings{Guo_2025_CVPR,
+    author    = {Guo, Mingtao and Xing, Guanyu and Liu, Yanli},
+    title     = {High-Fidelity Relightable Monocular Portrait Animation with Lighting-Controllable Video Diffusion Model},
+    booktitle = {Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)},
+    month     = {June},
+    year      = {2025},
+    pages     = {228-238}
 }
 ```
 ## License
