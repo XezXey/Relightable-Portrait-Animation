@@ -8,12 +8,14 @@ from src.decalib.deca import DECA
 from src.decalib.utils.config import cfg as deca_cfg
 from PIL import Image
 from tqdm import tqdm
+import json
+import pandas as pd
 import numpy as np
 import torch
 import cv2 
 import os 
 import argparse 
-
+from utils.sh_utils import rotate_sh
 
 class FaceMatting:
     def __init__(self) -> None:
@@ -70,8 +72,10 @@ class FaceImageRender:
             trans_verts = transform_points(trans_verts, tform, points_scale, [h, w])
 
             shape_images, _, grid, alpha_images, albedo_images =self.deca.render.render_shape(verts, trans_verts, h=h, w=w, lights=light, images=None, return_grid=True, mask=self.mask)
-            shape_images = shape_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy()[0] * 255
-            albedo_images = albedo_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy()[0] * 255
+            shape_images = shape_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy() * 255
+            albedo_images = albedo_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy() * 255
+            # shape_images = shape_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy()[0] * 255
+            # albedo_images = albedo_images.permute(0, 2, 3, 1).clamp(0, 1).detach().cpu().numpy()[0] * 255
         return shape_images, albedo_images
 
     def render_shape_with_light(self, codedict, target_light=None):
@@ -81,6 +85,16 @@ class FaceImageRender:
         cam, tform, h, w = codedict["cam"], codedict["tform"], codedict["height"], codedict["width"]
         shape_image, albedo_image = self.render_shape(shape, exp, pose, cam, target_light, tform, h, w)
         return shape_image
+    
+    def render_with_given_light_difarelipp(self, image, target_light):
+        codedict = self.image_to_3dcoeff(image) 
+        B = target_light.shape[0]
+        # Expand all codedict values to match the batch size of target_light
+        for key in codedict:
+            if isinstance(codedict[key], torch.Tensor):
+                codedict[key] = codedict[key].clone().detach().repeat_interleave(dim=0, repeats=B)
+        shading = self.render_shape_with_light(codedict, target_light=target_light)
+        return shading 
 
     def render_motion_single(self, image):
         codedict = self.image_to_3dcoeff(image) 
@@ -245,7 +259,7 @@ class InferVideo:
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
 
 class InferImage:
-    def __init__(self) -> None:
+    def __init__(self, light_path) -> None:
         self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
         self.lmk_extractor = LMKExtractor()
 
@@ -254,34 +268,56 @@ class InferImage:
         self.fir = FaceImageRender()
 
         self.fkpd = FaceKPDetector()
+        
+        self.light_path = light_path
+        
+        if args.light_path.endswith(".txt"):
+            self.read_sh = self.read_sh_from_txt()
+        else: 
+            raise NotImplementedError("[#] Only .txt format is supported for lighting path.")
 
-    def inference(self, source_path, light_path, video_path, save_path):
-        tmp_path = "resources/target/"
+    def read_sh_from_txt(self):
+        light = pd.read_csv(self.light_path, header=None, sep=" ", index_col=False, lineterminator='\n')
+        light.rename(columns={0:'img_name'}, inplace=True)
+        light = light.set_index('img_name').T.to_dict('list')
+        for k, v in light.items():
+            light[k] = np.array(v, dtype=np.float64)[None, ...] # [1, 27]
+        return light 
+        
+
+    def inference(self, source_path, target_light_name, num_frames, save_path):
+        tmp_path = "resources_difareli++/target/"
 
         if os.path.exists(tmp_path):
             os.system(f"rm -r {tmp_path}")
             
         os.mkdir(tmp_path)
-        os.system(f"ffmpeg -i {video_path} {tmp_path}/%5d.png")
 
         # motion sync
+        source_image_name = os.path.basename(source_path)
         source_image = np.array(Image.open(source_path).resize([512, 512]))[..., :3]
-        target_lighting = np.array(Image.open(light_path).resize([512, 512]))[..., :3]
+        if target_light_name:
+            target_light = self.read_sh[target_light_name.replace('.png', '.jpg')]        
+            target_light = torch.tensor(target_light).cuda()
+        else:
+            raise ValueError("[#] Please specify the target light name that exists in the light_path txt file.")
         
         # Self-drive for DiFaReli++ comparison (Single image relighting)
-        driver_frames = [source_image.copy() for _ in range(args.num_frames)]
+        self_driver_frames = [source_image.copy() for _ in range(num_frames)]
         
-        aligned_kpmaps = self.fkpd.motion_self(driver_frames)
+        aligned_kpmaps = self.fkpd.motion_self(self_driver_frames)
         
         alpha = self.fm.portrait_matting(source_image)
-
-        if motion_align == "relative":
-            aligned_shading = self.fir.render_motion_sync_relative(source_image, driver_frames, target_lighting)
-        else:
-            aligned_shading = self.fir.render_motion_sync(source_image, driver_frames, target_lighting)
         
+        target_light = rotate_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames, axis=2)  # Rotate the light for each frame
+        target_light = target_light['light'].reshape(num_frames, 9, 3)  # Reshape to [num_frames, 9, 3]
+        target_light = torch.tensor(target_light).cuda()  # Convert to tensor and move to GPU
         
-        for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(driver_frames, aligned_kpmaps, aligned_shading))):
+        # Input light to render need to be [1, 9, 3]
+        # aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, torch.tensor(target_light.reshape(1, 9, 3)).cuda().repeat_interleave(dim=0, repeats=10))
+        aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, target_light)
+        
+        for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(self_driver_frames, aligned_kpmaps, aligned_shading))):
             img = np.concatenate([source_image, alpha, drv_frame, kpmap, shading], axis=1)
             Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(idx + 1).zfill(5)}.png")
 
@@ -293,15 +329,47 @@ class InferImage:
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
     
 if __name__ == "__main__":
-    iv = InferImage()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--source_path", type=str, required=True, help="input image path") 
     parser.add_argument("--light_path", type=str, required=True, help="estimated lighting path (.txt)") 
     parser.add_argument("--save_path", type=str, default="resources/shading.mp4", help="shading hints") 
     parser.add_argument("--num_frames", type=int, default=30, help="number of frames to generate for self-drive")
+    parser.add_argument("--sample_pair_json", type=str, required=True, help="sample pair json file for DiFaReli++ comparison")
+    parser.add_argument("--idx", nargs='+', type=int, default=[-1], help="index of the source spherical harmonics coefficients to rotate")
     args = parser.parse_args()
 
-    iv.inference(source_path=args.source_path, light_path=args.light_path, save_path=args.save_path, num_frames=args.num_frames)
-         
-         
+
+    with open(args.sample_pair_json, 'r') as f:
+        sample_pairs = json.load(f)['pair']
+        sample_pairs = [v for v in sample_pairs.values()]
+        
+    if len(args.idx) > 2:
+        # Filter idx to be within 0 < idx < len(sample_pairs)
+        to_run_idx = [i for i in args.idx if 0 <= i < len(sample_pairs)]
+    elif args.idx == [-1]:
+        s = 0
+        e = len(sample_pairs)
+        to_run_idx = list(range(s, e))
+    elif len(args.idx) == 2:
+        s, e = args.idx
+        s = max(0, s)
+        e = min(e, len(sample_pairs))
+        to_run_idx = list(range(s, e))
+    else:
+        raise ValueError("Invalid index range provided. Please provide a valid range or -1 for all indices.")
+
+
+    iv = InferImage(light_path=args.light_path)
+    for idx in to_run_idx:
+        print(f"[#] Processing index {idx} with source image {sample_pairs[idx]['src']} and target light {sample_pairs[idx]['dst']}...")
+        
+        source_img = sample_pairs[idx]['src'].replace('.jpg', '.png')
+        target_light_name = sample_pairs[idx]['dst'].replace('.jpg', '.png')
+        iv.inference(source_path=args.source_path + source_img, 
+                    save_path=args.save_path, 
+                    target_light_name=target_light_name, 
+                    num_frames=args.num_frames
+                    )
+            
+            

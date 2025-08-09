@@ -86,7 +86,7 @@ class FaceImageRender:
         codedict = self.image_to_3dcoeff(image) 
         shading = self.render_shape_with_light(codedict)
         return shading 
-
+    
     def render_motion_single_with_light(self, image, target_light_image):
         codedict = self.image_to_3dcoeff(image) 
         target_light = self.image_to_3dcoeff(target_light_image)["light"]

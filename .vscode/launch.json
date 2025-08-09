@@ -29,6 +29,32 @@
             "console": "integratedTerminal",
             "cwd": "/home/mint/Dev/DiFaReli++/TPAMI_baseline_MajorRevision/Relightable-Portrait-Animation",
             "justMyCode": true
+        },
+        {
+            // python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_path resources/reference.png --light_path resources/target_lighting1.png --save_path resources/shading.mp4 --motion_align relative
+            "name": "RPA (CVPR 2025) - Preprocess for DiFaReli++",
+            "type": "debugpy",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+                "WANDB_MODE": "offline"
+            },
+            "program": "preprocess_for_difareli++.py",
+            "args": [
+                "--source_path",
+                "/data/mint/DPM_Dataset/ffhq_256_with_anno/ffhq_256_no_aliasing_png/valid/",
+                "--light_path",
+                "/data/mint/DPM_Dataset/ffhq_256_with_anno/params/valid/ffhq-valid-light-anno.txt",
+                "--save_path",
+                "resources_difareli++/shading.mp4",
+                "--num_frames",
+                "30",
+                "--sample_pair_json",
+                "/home/mint/Dev/DiFaReli++/TPAMI_baseline_MajorRevision/Relightable-Portrait-Animation/sample_json/DiFaReli++/website_cmp_sj.json"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "/home/mint/Dev/DiFaReli++/TPAMI_baseline_MajorRevision/Relightable-Portrait-Animation",
+            "justMyCode": true
         }
     ]
 }
