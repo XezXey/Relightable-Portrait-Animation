@@ -244,18 +244,64 @@ class InferVideo:
         Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(0).zfill(5)}.png")
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
 
+class InferImage:
+    def __init__(self) -> None:
+        self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
+        self.lmk_extractor = LMKExtractor()
+
+        self.fm = FaceMatting()
+
+        self.fir = FaceImageRender()
+
+        self.fkpd = FaceKPDetector()
+
+    def inference(self, source_path, light_path, video_path, save_path):
+        tmp_path = "resources/target/"
+
+        if os.path.exists(tmp_path):
+            os.system(f"rm -r {tmp_path}")
+            
+        os.mkdir(tmp_path)
+        os.system(f"ffmpeg -i {video_path} {tmp_path}/%5d.png")
+
+        # motion sync
+        source_image = np.array(Image.open(source_path).resize([512, 512]))[..., :3]
+        target_lighting = np.array(Image.open(light_path).resize([512, 512]))[..., :3]
+        
+        # Self-drive for DiFaReli++ comparison (Single image relighting)
+        driver_frames = [source_image.copy() for _ in range(args.num_frames)]
+        
+        aligned_kpmaps = self.fkpd.motion_self(driver_frames)
+        
+        alpha = self.fm.portrait_matting(source_image)
+
+        if motion_align == "relative":
+            aligned_shading = self.fir.render_motion_sync_relative(source_image, driver_frames, target_lighting)
+        else:
+            aligned_shading = self.fir.render_motion_sync(source_image, driver_frames, target_lighting)
+        
+        
+        for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(driver_frames, aligned_kpmaps, aligned_shading))):
+            img = np.concatenate([source_image, alpha, drv_frame, kpmap, shading], axis=1)
+            Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(idx + 1).zfill(5)}.png")
+
+        source_kp = self.fkpd.single_kp(source_image)
+        source_shading = self.fir.render_motion_single_with_light(source_image, source_image)
+        
+        img = np.concatenate([source_image, alpha, source_image, source_kp, source_shading], axis=1)
+        Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(0).zfill(5)}.png")
+        os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
     
 if __name__ == "__main__":
-    iv = InferVideo()
+    iv = InferImage()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video_path", type=str, default="resources/WDA_DebbieDingell1_000.mp4", help="driving video path") 
-    parser.add_argument("--source_path", type=str, default="resources/reference.png", help="reference image path") 
-    parser.add_argument("--light_path", type=str, default="resources/target_lighting1.png", help="target lighting image ") 
+    parser.add_argument("--source_path", type=str, required=True, help="input image path") 
+    parser.add_argument("--light_path", type=str, required=True, help="estimated lighting path (.txt)") 
     parser.add_argument("--save_path", type=str, default="resources/shading.mp4", help="shading hints") 
-    parser.add_argument("--motion_align", type=str, default="relative", help="motion alignment mode") 
+    parser.add_argument("--num_frames", type=int, default=30, help="number of frames to generate for self-drive")
     args = parser.parse_args()
 
-    iv.inference(source_path=args.source_path, light_path=args.light_path, video_path=args.video_path, save_path=args.save_path, motion_align=args.motion_align)
+    iv.inference(source_path=args.source_path, light_path=args.light_path, save_path=args.save_path, num_frames=args.num_frames)
          
          

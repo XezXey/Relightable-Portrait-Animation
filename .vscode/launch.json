@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // python preprocess.py --video_path resources/WDA_DebbieDingell1_000.mp4 --source_path resources/reference.png --light_path resources/target_lighting1.png --save_path resources/shading.mp4 --motion_align relative
+            "name": "RPA (CVPR 2025) - Preprocess",
+            "type": "debugpy",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+                "WANDB_MODE": "offline"
+            },
+            "program": "preprocess.py",
+            "args": [
+                "--video_path",
+                "resources/WDA_DebbieDingell1_000.mp4",
+                "--source_path",
+                "resources/reference.png",
+                "--light_path",
+                "resources/target_lighting1.png",
+                "--save_path",
+                "resources/shading.mp4",
+                "--motion_align",
+                "relative"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "/home/mint/Dev/DiFaReli++/TPAMI_baseline_MajorRevision/Relightable-Portrait-Animation",
+            "justMyCode": true
+        }
+    ]
+}
