@@ -229,8 +229,6 @@ if __name__ == "__main__":
         
     '''
     
-    
-
     args = parser.parse_args()
     relightablepa = RelightablePA(pretrained_model_name_or_path=args.pretrained_model_name_or_path, checkpoint_path=args.checkpoint_path)
     
