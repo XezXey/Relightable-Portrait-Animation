@@ -86,7 +86,7 @@ class FaceImageRender:
         codedict = self.image_to_3dcoeff(image) 
         shading = self.render_shape_with_light(codedict)
         return shading 
-    
+
     def render_motion_single_with_light(self, image, target_light_image):
         codedict = self.image_to_3dcoeff(image) 
         target_light = self.image_to_3dcoeff(target_light_image)["light"]
@@ -231,7 +231,6 @@ class InferVideo:
             aligned_shading = self.fir.render_motion_sync_relative(source_image, driver_frames, target_lighting)
         else:
             aligned_shading = self.fir.render_motion_sync(source_image, driver_frames, target_lighting)
-        
         
         for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(driver_frames, aligned_kpmaps, aligned_shading))):
             img = np.concatenate([source_image, alpha, drv_frame, kpmap, shading], axis=1)

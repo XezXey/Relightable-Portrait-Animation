@@ -15,7 +15,15 @@ import torch
 import cv2 
 import os 
 import argparse 
-from utils.sh_utils import rotate_sh
+from utils.sh_utils import rotate_sh, interp_sh
+from utils import logging
+import subprocess
+
+# ignore warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+
 
 class FaceMatting:
     def __init__(self) -> None:
@@ -259,7 +267,7 @@ class InferVideo:
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
 
 class InferImage:
-    def __init__(self, light_path) -> None:
+    def __init__(self, light_path, mani_light, rotate_sh_axis=None) -> None:
         self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
         self.lmk_extractor = LMKExtractor()
 
@@ -270,6 +278,9 @@ class InferImage:
         self.fkpd = FaceKPDetector()
         
         self.light_path = light_path
+        
+        self.mani_light = mani_light
+        self.rotate_sh_axis = rotate_sh_axis
         
         if args.light_path.endswith(".txt"):
             self.read_sh = self.read_sh_from_txt()
@@ -285,8 +296,9 @@ class InferImage:
         return light 
         
 
-    def inference(self, source_path, target_light_name, num_frames, save_path):
+    def inference(self, source_path, target_light_name, num_frames, save_path, save_fn):
         tmp_path = "resources_difareli++/target/"
+        os.makedirs(save_path, exist_ok=True)
 
         if os.path.exists(tmp_path):
             os.system(f"rm -r {tmp_path}")
@@ -303,13 +315,19 @@ class InferImage:
             raise ValueError("[#] Please specify the target light name that exists in the light_path txt file.")
         
         # Self-drive for DiFaReli++ comparison (Single image relighting)
+        source_kp = self.fkpd.single_kp(source_image)
         self_driver_frames = [source_image.copy() for _ in range(num_frames)]
-        
-        aligned_kpmaps = self.fkpd.motion_self(self_driver_frames)
+        all_kpmaps = [source_kp.copy() for _ in range(num_frames)]
         
         alpha = self.fm.portrait_matting(source_image)
         
-        target_light = rotate_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames, axis=2)  # Rotate the light for each frame
+        if self.mani_light == "rotate_sh":
+            target_light = rotate_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames, axis=self.rotate_sh_axis)  # Rotate the light for each frame
+        elif self.mani_light == 'interp_sh':
+            target_light = interp_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames)  # Rotate the light for each frame
+        else:
+            raise NotImplementedError("[#] Only 'rotate_sh' and 'interp_sh' are supported for manipulated light.")
+
         target_light = target_light['light'].reshape(num_frames, 9, 3)  # Reshape to [num_frames, 9, 3]
         target_light = torch.tensor(target_light).cuda()  # Convert to tensor and move to GPU
         
@@ -317,16 +335,32 @@ class InferImage:
         # aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, torch.tensor(target_light.reshape(1, 9, 3)).cuda().repeat_interleave(dim=0, repeats=10))
         aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, target_light)
         
-        for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(self_driver_frames, aligned_kpmaps, aligned_shading))):
+        # t = [1, num_frames]
+        for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(self_driver_frames, all_kpmaps, aligned_shading)), desc='[#] Saving frames...', leave=False):
             img = np.concatenate([source_image, alpha, drv_frame, kpmap, shading], axis=1)
             Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(idx + 1).zfill(5)}.png")
 
-        source_kp = self.fkpd.single_kp(source_image)
-        source_shading = self.fir.render_motion_single_with_light(source_image, source_image)
-        
+        # t = [0]
+        source_shading = self.fir.render_motion_single_with_light(source_image, source_image)[0]
         img = np.concatenate([source_image, alpha, source_image, source_kp, source_shading], axis=1)
         Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(0).zfill(5)}.png")
-        os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
+        
+        save_path = os.path.join(save_path, save_fn)
+        # os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
+        with open(os.devnull, 'wb') as devnull:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-r", "24",
+                    "-i", f"{tmp_path}/%05d.png",
+                    "-pix_fmt", "yuv420p",
+                    "-c:v", "libx264",
+                    save_path,
+                    "-y"
+                ],
+                stdout=devnull,
+                stderr=devnull
+            )
     
 if __name__ == "__main__":
 
@@ -337,12 +371,17 @@ if __name__ == "__main__":
     parser.add_argument("--num_frames", type=int, default=30, help="number of frames to generate for self-drive")
     parser.add_argument("--sample_pair_json", type=str, required=True, help="sample pair json file for DiFaReli++ comparison")
     parser.add_argument("--idx", nargs='+', type=int, default=[-1], help="index of the source spherical harmonics coefficients to rotate")
+    parser.add_argument("--use_self_light", action="store_true", help="use self-lighting for rendering")
+    parser.add_argument("--mani_light", type=str, required=True, help="manipulated light path for DiFaReli++ comparison")
+    parser.add_argument("--rotate_sh_axis", type=int, default=2, help="axis to rotate spherical harmonics coefficients, 0 for x, 1 for y, 2 for z")
     args = parser.parse_args()
 
 
     with open(args.sample_pair_json, 'r') as f:
         sample_pairs = json.load(f)['pair']
-        sample_pairs = [v for v in sample_pairs.values()]
+        sample_pairs_k = [k for k in sample_pairs.keys()]
+        sample_pairs_v = [v for v in sample_pairs.values()]
+        
         
     if len(args.idx) > 2:
         # Filter idx to be within 0 < idx < len(sample_pairs)
@@ -360,14 +399,40 @@ if __name__ == "__main__":
         raise ValueError("Invalid index range provided. Please provide a valid range or -1 for all indices.")
 
 
-    iv = InferImage(light_path=args.light_path)
+    
+    logger = logging.createLogger()
+    
+    logger.info("#" * 80)
+    logger.info(f"[#] Light manipulation mode: {args.mani_light}")
+    logger.info(f"[#] Light rotation axis (affective if mode is rotate_sh): {args.rotate_sh_axis}")
+    logger.info(f"[#] Use self light: {args.use_self_light}")
+    logger.info(f"[#] Number of frames to generate for self-drive: {args.num_frames}")
+    logger.info(f"[#] Source image path: {args.source_path}")
+    logger.info(f"[#] Save path: {args.save_path}")
+    logger.info("#" * 80)
+
+    iv = InferImage(light_path=args.light_path, mani_light=args.mani_light, rotate_sh_axis=args.rotate_sh_axis)
+
+    to_run_idx = tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
     for idx in to_run_idx:
-        print(f"[#] Processing index {idx} with source image {sample_pairs[idx]['src']} and target light {sample_pairs[idx]['dst']}...")
+        pair = sample_pairs_v[idx]
+        pair_id = sample_pairs_k[idx]
         
-        source_img = sample_pairs[idx]['src'].replace('.jpg', '.png')
-        target_light_name = sample_pairs[idx]['dst'].replace('.jpg', '.png')
+        to_run_idx.set_description(f"[#] Processing index {idx} with src image {pair['src']} and dst image {pair['dst']}...")
+        
+        source_img = pair['src'].replace('.jpg', '.png')
+        
+        if args.use_self_light:
+            target_light_name = pair['src'].replace('.jpg', '.png')
+        else:
+            target_light_name = pair['dst'].replace('.jpg', '.png')
+        
+        mode_suffix = f'/{args.mani_light}/' if args.mani_light == 'interp_sh' else f'/{args.mani_light}_axis={args.rotate_sh_axis}/'
+        save_path = f'{args.save_path}/{mode_suffix}/n_step={args.num_frames}/'
+        save_fn = f'pair{pair_id}_src={pair["src"]}_dst={pair["dst"]}.mp4'
         iv.inference(source_path=args.source_path + source_img, 
-                    save_path=args.save_path, 
+                    save_path=save_path, 
+                    save_fn=save_fn,
                     target_light_name=target_light_name, 
                     num_frames=args.num_frames
                     )
