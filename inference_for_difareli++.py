@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, glob
 import cv2
 import argparse
 import numpy as np
@@ -30,7 +30,7 @@ from src.modules.light_net import LightNet
 from src.modules.ref_net import RefNet
 from src.modules.unet import UNetSpatioTemporalConditionModel
 from src.pipelines.pipeline_relightalbepa_composer import RelightablepaPipeline
-import tqdm, json
+import tqdm, json, subprocess
 from utils.logging import createLogger
 
 
@@ -94,32 +94,20 @@ class RelightablePA():
         self.pipeline.set_progress_bar_config(disable=False)
 
     def portrait_animation_and_relighting(self, video_path, save_path, guidance, inference_steps, driving_mode="relighting"):
-        path = "resources/target/"
-        path_tmp = "resources/tmp/"
-        if not os.path.exists(path):
-            os.system(f"mkdir {path}")
-        else:
-            os.system(f"rm -r {path}/*")
-
-        if not os.path.exists(path_tmp):
-            os.system(f"mkdir {path_tmp}")
-        else:
-            os.system(f"rm -r {path_tmp}/*")
-        
-        os.system(f"ffmpeg -i {video_path} {path}/%5d.png")
-        
+        os.makedirs(save_path, exist_ok=True)
         pixel_values = []
         pixel_head = []
         pixel_values_light = []
-        img = np.array(Image.open(path + "00001.png"))
+        img = np.array(Image.open(video_path + "00001.png"))
         # img = cv2.resize(img, (img.shape[1], img.shape[0]))
         pixel_ref_values = img[:, :512]
         pixel_ref_mask = img[:, 512:1024]
         pixel_ref_mask = cv2.resize(pixel_ref_mask, (64, 64))
         # pixel_ref_mask = np.ones_like(pixel_ref_mask) * 255
 
-        for i in range(1, len(os.listdir(path))+1):
-            img = np.array(Image.open(f"{path}/{str(i).zfill(5)}.png"), dtype=np.uint8)
+        # for i in range(1, len(glob.glob(f"{video_path}/*.png"))+1):
+        for i in range(len(glob.glob(f"{video_path}/*.png"))):
+            img = np.array(Image.open(f"{video_path}/{str(i).zfill(5)}.png"), dtype=np.uint8)
             # img = cv2.resize(img, (img.shape[1], img.shape[0]))
             pixel_values.append(img[:, 1024:1536][None])
             pixel_head.append(img[:, 1536:2048][None])
@@ -157,21 +145,48 @@ class RelightablePA():
             generator=None, min_guidance_scale=guidance, 
             max_guidance_scale=guidance, decode_chunk_size=8, output_type="pt", device="cuda"
         ).frames.cpu()
-        video_frames = (frames.permute(0, 1, 3, 4, 2) * 255.0).to(torch.uint8).numpy()[0]
+        video_frames = (frames.permute(0, 1, 3, 4, 2) * 255.0).to(torch.uint8).numpy()[0]   # B x T x C x H x W => T x H x W x C
 
-        final = []
-        for i in range(pixel_head.size(1)):
-            img = video_frames[i]
-            head = np.array(heads_pil[i])
-            light = np.array(lights_drv_pil[i])
-            tar = np.array(pixel_pil[i])
-            ref = np.array(reference_pil[0])
-            # final.append(np.concatenate([ref, head, light, img, tar], axis=1))
-            Image.fromarray(np.uint8(np.concatenate([ref, light, img, tar], axis=1))).save(f"{path_tmp}/{str(i).zfill(5)}.png")
+        # final = []
+        # for i in range(pixel_head.size(1)):
+        #     img = video_frames[i]
+        #     head = np.array(heads_pil[i])
+        #     light = np.array(lights_drv_pil[i])
+        #     tar = np.array(pixel_pil[i])
+        #     ref = np.array(reference_pil[0])
+        #     # final.append(np.concatenate([ref, head, light, img, tar], axis=1))
+        #     Image.fromarray(np.uint8(np.concatenate([ref, light, img, tar], axis=1))).save(f"{save_path}/{str(i).zfill(5)}.png")
 
-        os.system(f"ffmpeg -r 20 -i {path_tmp}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
+        # os.system(f"ffmpeg -r 20 -i {path_tmp}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
         # torchvision.io.write_video(save_path, final, fps=20, video_codec='h264', options={'crf': '10'})
-
+        
+        res_frame = []
+        shading_frame = []
+        out_frame = []
+        
+        num_frames = video_frames.shape[0]
+        save_path = f'{save_path}/n_step={num_frames}/'
+        os.makedirs(save_path, exist_ok=True)
+        for i in range(pixel_head.size[1]):
+            img = video_frames[i]
+            light = np.array(pixel_pil[i])
+            out = np.concatenate([img, light], axis=1)
+            
+            out_frame.append(out)
+            res_frame.append(img)
+            shading_frame.append(light)
+            
+            Image.fromarray(np.uint8(res_frame)).save(f"{save_path}/res_frame{str(i).zfill(3)}.png")
+            Image.fromarray(np.uint8(shading_frame)).save(f"{save_path}/ren_frame{str(i).zfill(3)}.png")
+            Image.fromarray(np.uint8(out_frame)).save(f"{save_path}/out_frame{str(i).zfill(3)}.png")
+            
+        # frames to vids using ffmpeg and subprocess
+        output_vid_name = ['res', 'ren', 'out']
+        for i, fn in enumerate(['res_frame%03d.png', 'ren_frame%03d.png', 'out_frame%03d.png']):
+            input_pattern = f"{save_path}/{fn}"
+            output_path = f"{save_path}/{output_vid_name[i]}"
+            cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
+            subprocess.run(cmd, shell=True, check=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -226,8 +241,6 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid index range provided. Please provide a valid range or -1 for all indices.")
 
-
-    
     logger = createLogger()
     
     logger.info("#" * 80)
@@ -241,17 +254,19 @@ if __name__ == "__main__":
     logger.info(f"[#] Inference steps: {args.inference_steps}")
     logger.info("#" * 80)
     
-    to_run_idx = tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
+    to_run_idx = tqdm.tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
     for idx in to_run_idx:
         pair = sample_pairs_v[idx]
         pair_id = sample_pairs_k[idx]
-        fn = f'{pair_id}_src={pair["src"]}_ref={pair["dst"]}'
+        fn = f'{pair_id}_src={pair["src"]}_dst={pair["dst"]}'
         
-        input_path = f'{args.video_path}/{fn}.mp4'
-        if not os.path.exists(input_path):
+        to_run_idx.set_description(f"[#] Processing index {idx} with src image {pair['src']} and dst image {pair['dst']}...")
+        
+        input_path = f'{args.video_path}/{fn}/'
+        video_path = f'{args.video_path}/{fn}/{fn}.mp4'
+        if not os.path.exists(video_path):
             logger.error(f"[!] Input video {input_path} does not exist. Skipping index {idx}.")
             continue
-        
         
         save_path = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/'
         relightablepa.portrait_animation_and_relighting(video_path=input_path, 
@@ -259,5 +274,4 @@ if __name__ == "__main__":
                                                         guidance=args.guidance, 
                                                         inference_steps=args.inference_steps, 
                                                         driving_mode=args.driving_mode)
-            
             

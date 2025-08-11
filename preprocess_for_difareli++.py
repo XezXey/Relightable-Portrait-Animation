@@ -297,13 +297,7 @@ class InferImage:
         
 
     def inference(self, source_path, target_light_name, num_frames, save_path, save_fn):
-        tmp_path = "resources_difareli++/target/"
         os.makedirs(save_path, exist_ok=True)
-
-        if os.path.exists(tmp_path):
-            os.system(f"rm -r {tmp_path}")
-            
-        os.mkdir(tmp_path)
 
         # motion sync
         source_image_name = os.path.basename(source_path)
@@ -335,32 +329,52 @@ class InferImage:
         # aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, torch.tensor(target_light.reshape(1, 9, 3)).cuda().repeat_interleave(dim=0, repeats=10))
         aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, target_light)
         
+        img_path = f"{save_path}/{save_fn}/"
+        os.makedirs(img_path, exist_ok=True)
         # t = [1, num_frames]
         for idx, (drv_frame, kpmap, shading) in tqdm(enumerate(zip(self_driver_frames, all_kpmaps, aligned_shading)), desc='[#] Saving frames...', leave=False):
             img = np.concatenate([source_image, alpha, drv_frame, kpmap, shading], axis=1)
-            Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(idx + 1).zfill(5)}.png")
+            Image.fromarray(np.uint8(img)).save(f"{img_path}/{str(idx + 1).zfill(5)}.png")
 
         # t = [0]
         source_shading = self.fir.render_motion_single_with_light(source_image, source_image)[0]
         img = np.concatenate([source_image, alpha, source_image, source_kp, source_shading], axis=1)
-        Image.fromarray(np.uint8(img)).save(f"{tmp_path}/{str(0).zfill(5)}.png")
+        Image.fromarray(np.uint8(img)).save(f"{img_path}/{str(0).zfill(5)}.png")
         
-        save_path = os.path.join(save_path, save_fn)
+        with open(os.devnull, 'wb') as devnull:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-r", "24",
+                    "-i", f"{img_path}/%05d.png",
+                    "-pix_fmt", "yuv420p",
+                    "-c:v", "libx264",
+                    f'{img_path}/{save_fn}.mp4',
+                    "-y"
+                ],
+                stdout=devnull,
+                stderr=devnull
+            )
+        
+        vid_path = f'{save_path}/vids/'
+        os.makedirs(vid_path, exist_ok=True)
         # os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
         with open(os.devnull, 'wb') as devnull:
             subprocess.run(
                 [
                     "ffmpeg",
                     "-r", "24",
-                    "-i", f"{tmp_path}/%05d.png",
+                    "-i", f"{img_path}/%05d.png",
                     "-pix_fmt", "yuv420p",
                     "-c:v", "libx264",
-                    save_path,
+                    f'{vid_path}/{save_fn}.mp4',
                     "-y"
                 ],
                 stdout=devnull,
                 stderr=devnull
             )
+            
+
     
 if __name__ == "__main__":
 
@@ -429,7 +443,7 @@ if __name__ == "__main__":
         
         mode_suffix = f'/{args.mani_light}/' if args.mani_light == 'interp_sh' else f'/{args.mani_light}_axis={args.rotate_sh_axis}/'
         save_path = f'{args.save_path}/{mode_suffix}/n_step={args.num_frames}/'
-        save_fn = f'pair{pair_id}_src={pair["src"]}_dst={pair["dst"]}.mp4'
+        save_fn = f'{pair_id}_src={pair["src"]}_dst={pair["dst"]}'
         iv.inference(source_path=args.source_path + source_img, 
                     save_path=save_path, 
                     save_fn=save_fn,

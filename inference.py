@@ -125,6 +125,8 @@ class RelightablePA():
 
         pixel_values = torch.tensor(np.concatenate(pixel_values, axis=0)[None]).to(self.device, dtype=self.weight_dtype).permute(0, 1, 4, 2, 3) / 127.5 - 1.0
         pixel_head = torch.tensor(np.concatenate(pixel_head, axis=0)[None]).to(self.device, dtype=self.weight_dtype).permute(0, 1, 4, 2, 3) / 255.0
+        print(pixel_head.shape)
+        exit()
         pixel_values_light = torch.tensor(np.concatenate(pixel_values_light, axis=0)[None]).to(self.device, dtype=self.weight_dtype).permute(0, 1, 4, 2, 3) / 255.0
 
         pixel_ref_values = torch.tensor(pixel_ref_values[None, None]).repeat(1, pixel_values.size(1), 1, 1, 1).to(self.device, dtype=self.weight_dtype).permute(0, 1, 4, 2, 3) / 127.5 - 1.0
