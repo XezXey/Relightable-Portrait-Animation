@@ -21,6 +21,7 @@ import numpy as np
 from PIL import Image
 import torch
 import torch.utils.checkpoint
+import torchvision
 from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection
 
 from diffusers import AutoencoderKL, EulerDiscreteScheduler
@@ -32,6 +33,9 @@ from src.modules.unet import UNetSpatioTemporalConditionModel
 from src.pipelines.pipeline_relightalbepa_composer import RelightablepaPipeline
 import tqdm, json, subprocess
 from utils.logging import createLogger
+import warnings
+warnings.filterwarnings('ignore')
+
 
 
 class RelightablePA():
@@ -164,29 +168,39 @@ class RelightablePA():
         shading_frame = []
         out_frame = []
         
+        
         num_frames = video_frames.shape[0]
         save_path = f'{save_path}/n_step={num_frames}/'
         os.makedirs(save_path, exist_ok=True)
-        for i in range(pixel_head.size[1]):
+        for i in range(num_frames):
             img = video_frames[i]
-            light = np.array(pixel_pil[i])
+            light = np.array(lights_drv_pil[i])
             out = np.concatenate([img, light], axis=1)
             
             out_frame.append(out)
             res_frame.append(img)
             shading_frame.append(light)
             
-            Image.fromarray(np.uint8(res_frame)).save(f"{save_path}/res_frame{str(i).zfill(3)}.png")
-            Image.fromarray(np.uint8(shading_frame)).save(f"{save_path}/ren_frame{str(i).zfill(3)}.png")
-            Image.fromarray(np.uint8(out_frame)).save(f"{save_path}/out_frame{str(i).zfill(3)}.png")
-            
+            Image.fromarray(np.uint8(img)).save(f"{save_path}/res_frame{str(i).zfill(3)}.png")
+            Image.fromarray(np.uint8(light)).save(f"{save_path}/ren_frame{str(i).zfill(3)}.png")
+            Image.fromarray(np.uint8(out)).save(f"{save_path}/out_frame{str(i).zfill(3)}.png")
+         
+
+        res_frame_rt = res_frame + res_frame[::-1]
+        shading_frame_rt = shading_frame + shading_frame[::-1]
+        out_frame_rt = out_frame + out_frame[::-1]
+
         # frames to vids using ffmpeg and subprocess
         output_vid_name = ['res', 'ren', 'out']
         for i, fn in enumerate(['res_frame%03d.png', 'ren_frame%03d.png', 'out_frame%03d.png']):
             input_pattern = f"{save_path}/{fn}"
-            output_path = f"{save_path}/{output_vid_name[i]}"
+            output_path = f"{save_path}/{output_vid_name[i]}.mp4"
             cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
             subprocess.run(cmd, shell=True, check=True)
+
+        # save the roundtrip version (forward + reverse)
+        for vf in [res_frame_rt, shading_frame_rt, out_frame_rt]:
+            torchvision.io.write_video(vf, f"{save_path}/{vf}.mp4", fps=24, video_codec='h264', options={'crf': '10'})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
