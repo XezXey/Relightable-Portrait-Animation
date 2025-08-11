@@ -168,9 +168,8 @@ class RelightablePA():
         shading_frame = []
         out_frame = []
         
-        
         num_frames = video_frames.shape[0]
-        save_path = f'{save_path}/n_step={num_frames}/'
+        save_path = f'{save_path}/gs={guidance}_ds={inference_steps}/n_step={num_frames-1}/'
         os.makedirs(save_path, exist_ok=True)
         for i in range(num_frames):
             img = video_frames[i]
@@ -199,8 +198,9 @@ class RelightablePA():
             subprocess.run(cmd, shell=True, check=True)
 
         # save the roundtrip version (forward + reverse)
-        for vf in [res_frame_rt, shading_frame_rt, out_frame_rt]:
-            torchvision.io.write_video(vf, f"{save_path}/{vf}.mp4", fps=24, video_codec='h264', options={'crf': '10'})
+
+        for i, vf in enumerate([res_frame_rt, shading_frame_rt, out_frame_rt]):
+            torchvision.io.write_video(video_array=vf, filename=f"{save_path}/{output_vid_name[i]}_rt.mp4", fps=24, video_codec='h264', options={'crf': '10'})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
