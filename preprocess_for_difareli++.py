@@ -267,7 +267,7 @@ class InferVideo:
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
 
 class InferImage:
-    def __init__(self, light_path, mani_light, rotate_sh_axis=None) -> None:
+    def __init__(self, mani_light_dict) -> None:
         self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
         self.lmk_extractor = LMKExtractor()
 
@@ -277,10 +277,10 @@ class InferImage:
 
         self.fkpd = FaceKPDetector()
         
-        self.light_path = light_path
-        
-        self.mani_light = mani_light
-        self.rotate_sh_axis = rotate_sh_axis
+        self.light_path = mani_light_dict['light_path']
+        self.mani_light = mani_light_dict['mani_light']
+        self.rotate_sh_axis = mani_light_dict['rotate_sh_axis']
+        self.scale_sh = mani_light_dict['scale_sh']
         
         if args.light_path.endswith(".txt"):
             self.read_sh = self.read_sh_from_txt()
@@ -303,7 +303,14 @@ class InferImage:
         source_image_name = os.path.basename(source_path)
         source_image = np.array(Image.open(source_path).resize([512, 512]))[..., :3]
         if target_light_name:
-            target_light = self.read_sh[target_light_name.replace('.png', '.jpg')]        
+            if args.img_ext == '.png':
+                # sample_json has .jpg but the image is .png
+                source_light = self.read_sh[source_image_name.replace('.jpg', '.png')]
+                target_light = self.read_sh[target_light_name.replace('.jpg', '.png')]
+            else:
+                source_light = self.read_sh[source_image_name]
+                target_light = self.read_sh[target_light_name]
+            source_light = torch.tensor(source_light).cuda()
             target_light = torch.tensor(target_light).cuda()
         else:
             raise ValueError("[#] Please specify the target light name that exists in the light_path txt file.")
@@ -318,12 +325,13 @@ class InferImage:
         if self.mani_light == "rotate_sh":
             target_light = rotate_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames, axis=self.rotate_sh_axis)  # Rotate the light for each frame
         elif self.mani_light == 'interp_sh':
-            target_light = interp_sh({'light': target_light.detach().cpu().numpy()}, src_idx=0, n_step=num_frames)  # Rotate the light for each frame
+            target_light = interp_sh({'source_light': source_light.detach().cpu().numpy(), 'target_light': target_light.detach().cpu().numpy()}, n_step=num_frames)  # Rotate the light for each frame
         else:
             raise NotImplementedError("[#] Only 'rotate_sh' and 'interp_sh' are supported for manipulated light.")
 
         target_light = target_light['light'].reshape(num_frames, 9, 3)  # Reshape to [num_frames, 9, 3]
         target_light = torch.tensor(target_light).cuda()  # Convert to tensor and move to GPU
+        target_light = target_light * args.scale_sh
         
         # Input light to render need to be [1, 9, 3]
         # aligned_shading = self.fir.render_with_given_light_difarelipp(source_image, torch.tensor(target_light.reshape(1, 9, 3)).cuda().repeat_interleave(dim=0, repeats=10))
@@ -388,6 +396,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_self_light", action="store_true", help="use self-lighting for rendering")
     parser.add_argument("--mani_light", type=str, required=True, help="manipulated light path for DiFaReli++ comparison")
     parser.add_argument("--rotate_sh_axis", type=int, default=2, help="axis to rotate spherical harmonics coefficients, 0 for x, 1 for y, 2 for z")
+    parser.add_argument("--scale_sh", type=float, default=1.0, help="scale factor for spherical harmonics coefficients")
+    parser.add_argument("--img_ext", type=str, required=True, help="image extension in the sample pair json file, e.g., .jpg or .png")
     args = parser.parse_args()
 
 
@@ -419,13 +429,20 @@ if __name__ == "__main__":
     logger.info("#" * 80)
     logger.info(f"[#] Light manipulation mode: {args.mani_light}")
     logger.info(f"[#] Light rotation axis (affective if mode is rotate_sh): {args.rotate_sh_axis}")
+    logger.info(f"[#] Scale sh: {args.scale_sh}")
     logger.info(f"[#] Use self light: {args.use_self_light}")
     logger.info(f"[#] Number of frames to generate for self-drive: {args.num_frames}")
     logger.info(f"[#] Source image path: {args.source_path}")
     logger.info(f"[#] Save path: {args.save_path}")
     logger.info("#" * 80)
 
-    iv = InferImage(light_path=args.light_path, mani_light=args.mani_light, rotate_sh_axis=args.rotate_sh_axis)
+    mani_light_dict = {
+        "light_path": args.light_path,
+        "mani_light": args.mani_light,
+        "rotate_sh_axis": args.rotate_sh_axis,
+        "scale_sh": args.scale_sh
+    }
+    iv = InferImage(mani_light_dict=mani_light_dict)
 
     to_run_idx = tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
     for idx in to_run_idx:
@@ -442,7 +459,7 @@ if __name__ == "__main__":
             target_light_name = pair['dst'].replace('.jpg', '.png')
         
         mode_suffix = f'/{args.mani_light}/' if args.mani_light == 'interp_sh' else f'/{args.mani_light}_axis={args.rotate_sh_axis}/'
-        save_path = f'{args.save_path}/{mode_suffix}/n_step={args.num_frames}/'
+        save_path = f'{args.save_path}/{mode_suffix}/scale_sh={args.scale_sh}/n_step={args.num_frames}/'
         save_fn = f'{pair_id}_src={pair["src"]}_dst={pair["dst"]}'
         iv.inference(source_path=args.source_path + source_img, 
                     save_path=save_path, 

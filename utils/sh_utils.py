@@ -76,11 +76,12 @@ def rotate_sh(cond, src_idx, n_step, axis):
     out_sh = np.stack(out_sh, 0)    # [n_step, 27]
     return {'light':out_sh}
   
-def interp_sh(cond, src_idx, n_step):
+def interp_sh(cond, n_step):
   # Lerp interpolation between 2 light
-  light = cond['light'][src_idx]
+  source_light = cond['source_light'][0]
+  target_light = cond['target_light'][0]
   lerping = np.linspace(0, 1, n_step)
   out_sh = []
   for l in lerping:
-      out_sh.append(light * (1 - l) + light * l)
+    out_sh.append((1 - l) * source_light + l * target_light)
   return {'light': np.array(out_sh)}
