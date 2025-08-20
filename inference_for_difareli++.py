@@ -195,7 +195,7 @@ class RelightablePA():
             input_pattern = f"{save_path}/{fn}"
             output_path = f"{save_path}/{output_vid_name[i]}.mp4"
             cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
-            subprocess.run(cmd, shell=True, check=True)
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
 
         # save the roundtrip version (forward + reverse)
 

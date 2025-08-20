@@ -46,12 +46,15 @@ def main():
 
     # Fixed part of the command
     base_cmd = [
-        "python", "inference_for_difareli++.py",
+        "python", "./inference_for_difareli++.py",
         "--pretrained_model_name_or_path", "/data2/mint/pretrained_weights/stable-video-diffusion-img2vid-xt",
         "--checkpoint_path", "/data2/mint/pretrained_weights/relipa",
         "--inference_steps", "25",
         "--driving_mode", "relighting",
     ]
+    import os
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
     # Iterate over all combinations
     for g in args.guidance:
@@ -90,8 +93,8 @@ def main():
             logger.info(f"[#] GPU ID: {args.gpu_id}")
             
             cmd = (
-                f"CUDA_VISIBLE_DEVICES={args.gpu_id} "
-                + " ".join(base_cmd)
+                # f"CUDA_VISIBLE_DEVICES={args.gpu_id} "
+                " ".join(base_cmd)
                 + f" --guidance {g}"
                 + f" --video_path {shlex.quote(vp)}"
                 + f" --save_path {shlex.quote(save_dir)}"
@@ -101,7 +104,7 @@ def main():
             )
 
             logger.warning(f"Running command: {cmd}")
-            subprocess.run(cmd, shell=False, check=True)
+            os.system(cmd)
 
 if __name__ == "__main__":
     main()
