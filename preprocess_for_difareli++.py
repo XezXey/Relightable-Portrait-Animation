@@ -305,8 +305,8 @@ class InferImage:
         if target_light_name:
             if args.img_ext == '.png':
                 # sample_json has .jpg but the image is .png
-                source_light = self.read_sh[source_image_name.replace('.jpg', '.png')]
-                target_light = self.read_sh[target_light_name.replace('.jpg', '.png')]
+                source_light = self.read_sh[source_image_name.replace('.png', '.jpg')]
+                target_light = self.read_sh[target_light_name.replace('.png', '.jpg')]
             else:
                 source_light = self.read_sh[source_image_name]
                 target_light = self.read_sh[target_light_name]
@@ -451,12 +451,18 @@ if __name__ == "__main__":
         
         to_run_idx.set_description(f"[#] Processing index {idx} with src image {pair['src']} and dst image {pair['dst']}...")
         
-        source_img = pair['src'].replace('.jpg', '.png')
-        
-        if args.use_self_light:
-            target_light_name = pair['src'].replace('.jpg', '.png')
+        if args.img_ext == '.png':
+            source_img = pair['src'].replace('.jpg', '.png')
+            if args.use_self_light:
+                target_light_name = pair['src'].replace('.jpg', '.png')
+            else:
+                target_light_name = pair['dst'].replace('.jpg', '.png')
         else:
-            target_light_name = pair['dst'].replace('.jpg', '.png')
+            source_img = pair['src']
+            if args.use_self_light:
+                target_light_name = pair['src']
+            else:
+                target_light_name = pair['dst']
         
         mode_suffix = f'/{args.mani_light}/' if args.mani_light == 'interp_sh' else f'/{args.mani_light}_axis={args.rotate_sh_axis}/'
         save_path = f'{args.save_path}/{mode_suffix}/scale_sh={args.scale_sh}/n_step={args.num_frames}/'

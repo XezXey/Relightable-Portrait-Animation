@@ -215,6 +215,7 @@ if __name__ == "__main__":
     parser.add_argument("--idx", nargs='+', type=int, default=[-1], help="index of the source spherical harmonics coefficients to rotate")
     parser.add_argument("--video_path", type=str, required=True, help="reference and shading") 
     parser.add_argument("--save_path", type=str, default="result.mp4", help="result save path")
+    parser.add_argument("--scale_sh", type=float, required=True, help="scale spherical harmonics coefficients for DiFaReli++ comparison")
     
     '''
     Save into
@@ -280,7 +281,7 @@ if __name__ == "__main__":
             logger.error(f"[!] Input video {input_path} does not exist. Skipping index {idx}.")
             continue
         
-        save_path = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/'
+        save_path = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/scale_sh={args.scale_sh}/'
         relightablepa.portrait_animation_and_relighting(video_path=input_path, 
                                                         save_path=save_path, 
                                                         guidance=args.guidance, 
