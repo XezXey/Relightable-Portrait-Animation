@@ -169,7 +169,7 @@ class RelightablePA():
         out_frame = []
         
         num_frames = video_frames.shape[0]
-        save_path = f'{save_path}/gs={guidance}_ds={inference_steps}/n_step={num_frames-1}/'
+        save_path = f'{save_path}/gs={guidance}_ds={inference_steps}/n_frames={num_frames-1}/'
         os.makedirs(save_path, exist_ok=True)
         for i in range(num_frames):
             img = video_frames[i]
