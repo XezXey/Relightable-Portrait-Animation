@@ -282,7 +282,7 @@ if __name__ == "__main__":
             logger.error(f"[!] Input video {input_path} does not exist. Skipping index {idx}.")
             continue
         
-        save_path = f'{args.save_path}/src={pair["src"]}_dst={pair["dst"]}/scale_sh={args.scale_sh}/'
+        save_path = f'{args.save_path}/src={pair["src"]}/dst={pair["dst"]}/scale_sh={args.scale_sh}/'
         relightablepa.portrait_animation_and_relighting(video_path=input_path, 
                                                         save_path=save_path, 
                                                         guidance=args.guidance, 
