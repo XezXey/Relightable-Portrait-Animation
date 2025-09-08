@@ -142,12 +142,12 @@ def create_app():
                     out += f"<td style='font-weight:bold;font-size:25pt'>scale_sh={scale_sh}</td>"
                     for gs in [2.0, 4.0, 4.5, 6.0, 8.0]:
                         img_dir = f'{args.sampling_dir}/src={src}_dst={dst}/scale_sh={scale_sh}/gs={gs}_ds=25/n_step={args.num_frames}/'
-                        frames = sorted(glob.glob(f'{img_dir}/out_frame*.png'))
+                        frames = sorted(glob.glob(f'{img_dir}/res_frame*.png'))
                         # Model's metadata
                         out += f"<td>"
                         if len(frames) > 1:
                             f = frames[int(sf)]
-                            out += "<img width=\"512\" height=\"256\" src=/files/" + f + ">"
+                            out += "<img width=\"256\" height=\"256\" src=/files/" + f + ">"
                         else:
                             out += "<p style=\"color:red\">File not found!</p>"
                         out += "</td>"
