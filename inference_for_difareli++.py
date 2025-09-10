@@ -168,6 +168,10 @@ class RelightablePA():
         shading_frame = []
         out_frame = []
         
+        res_frame_256 = []
+        shading_frame_256 = []
+        out_frame_256 = []
+        
         num_frames = video_frames.shape[0]
         save_path = f'{save_path}/gs={guidance}_ds={inference_steps}/n_frames={num_frames-1}'
         os.makedirs(save_path + '/256/', exist_ok=True)
@@ -177,19 +181,24 @@ class RelightablePA():
             light = np.array(lights_drv_pil[i])
             out = np.concatenate([img, light], axis=1)
             
+            # 512x512
             out_frame.append(out)
             res_frame.append(img)
             shading_frame.append(light)
             
-            # 512x512
             Image.fromarray(np.uint8(img)).save(f"{save_path}/512/res_frame{str(i).zfill(3)}.png")
             Image.fromarray(np.uint8(light)).save(f"{save_path}/512/ren_frame{str(i).zfill(3)}.png")
             Image.fromarray(np.uint8(out)).save(f"{save_path}/512/out_frame{str(i).zfill(3)}.png")
+            
             # 256x256
             img_256 = Image.fromarray(np.uint8(img)).resize((256, 256), Image.LANCZOS)
             light_256 = Image.fromarray(np.uint8(light)).resize((256, 256), Image.LANCZOS)
-            out_256 = Image.fromarray(np.uint8(out)).resize((256, 256), Image.LANCZOS)
-
+            out_256 = Image.fromarray(np.concatenate([np.array(img_256), np.array(light_256)], axis=1).astype(np.uint8))
+            
+            res_frame_256.append(np.array(img_256))
+            shading_frame_256.append(np.array(light_256))
+            out_frame_256.append(np.array(out_256))
+            
             img_256.save(f"{save_path}/256/res_frame{str(i).zfill(3)}.png")
             light_256.save(f"{save_path}/256/ren_frame{str(i).zfill(3)}.png")
             out_256.save(f"{save_path}/256/out_frame{str(i).zfill(3)}.png")
@@ -197,23 +206,29 @@ class RelightablePA():
         res_frame_rt = res_frame + res_frame[::-1]
         shading_frame_rt = shading_frame + shading_frame[::-1]
         out_frame_rt = out_frame + out_frame[::-1]
+        res_frame_rt_256 = res_frame_256 + res_frame_256[::-1]
+        shading_frame_rt_256 = shading_frame_256 + shading_frame_256[::-1]
+        out_frame_rt_256 = out_frame_256 + out_frame_256[::-1]
 
         # frames to vids using ffmpeg and subprocess
-        output_vid_name = ['res', 'ren', 'out']
+        output_vid_name = ['out', 'ren', 'res']
         for reso in ['512', '256']:
-            save_path = f'{save_path}/{reso}'
-            os.makedirs(save_path, exist_ok=True)
+            save_path_tmp = f'{save_path}/{reso}'
+            os.makedirs(save_path_tmp, exist_ok=True)
             for i, fn in enumerate(['res_frame%03d.png', 'ren_frame%03d.png', 'out_frame%03d.png']):
-                input_pattern = f"{save_path}/{fn}"
-                output_path = f"{save_path}/{output_vid_name[i]}.mp4"
+                input_pattern = f"{save_path_tmp}/{fn}"
+                output_path = f"{save_path_tmp}/{output_vid_name[i]}.mp4"
                 cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
                 # subprocess.run(cmd.split(' '), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
                 os.system(cmd)
 
         # save the roundtrip version (forward + reverse)
 
-        for i, vf in enumerate([res_frame_rt, shading_frame_rt, out_frame_rt]):
-            torchvision.io.write_video(video_array=vf, filename=f"{save_path}/{output_vid_name[i]}_rt.mp4", fps=24, video_codec='h264', options={'crf': '10'})
+        for reso in ['512', '256']:
+            save_path_tmp = f'{save_path}/{reso}'
+            vid_rt_list = [out_frame_rt, shading_frame_rt, res_frame_rt] if reso == '512' else [out_frame_rt_256, shading_frame_rt_256, res_frame_rt_256]
+            for i, vf in enumerate(vid_rt_list):
+                torchvision.io.write_video(video_array=vf, filename=f"{save_path_tmp}/{output_vid_name[i]}_rt.mp4", fps=24, video_codec='h264', options={'crf': '10'})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

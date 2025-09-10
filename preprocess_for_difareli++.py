@@ -174,13 +174,13 @@ class FaceImageRender:
         return shading_frames
 
 class FaceKPDetector:
-    def __init__(self) -> None:
+    def __init__(self, min_face_detection_confidence=0.5) -> None:
         self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
-        self.lmk_extractor = LMKExtractor()
+        self.lmk_extractor = LMKExtractor(min_face_detection_confidence=min_face_detection_confidence)
 
     def motion_sync(self, ref_image, driver_frames):        
         ref_image = cv2.cvtColor(ref_image, cv2.COLOR_RGB2BGR)
-        ref_frame =cv2.resize(ref_image, (512, 512))
+        ref_frame = cv2.resize(ref_image, (512, 512))
         ref_det = self.lmk_extractor(ref_frame)
 
         sequence_driver_det = []
@@ -267,15 +267,15 @@ class InferVideo:
         os.system(f"ffmpeg -r 20 -i {tmp_path}/%05d.png -pix_fmt yuv420p -c:v libx264 {save_path} -y")
 
 class InferImage:
-    def __init__(self, mani_light_dict) -> None:
+    def __init__(self, mani_light_dict, min_face_detection_confidence=0.5) -> None:
         self.vis = FaceMeshVisualizer(draw_iris=False, draw_mouse=True, draw_eye=True, draw_nose=True, draw_eyebrow=True, draw_pupil=True)
-        self.lmk_extractor = LMKExtractor()
+        self.lmk_extractor = LMKExtractor(min_face_detection_confidence=min_face_detection_confidence)
 
         self.fm = FaceMatting()
 
         self.fir = FaceImageRender()
 
-        self.fkpd = FaceKPDetector()
+        self.fkpd = FaceKPDetector(min_face_detection_confidence=min_face_detection_confidence)
         
         self.light_path = mani_light_dict['light_path']
         self.mani_light = mani_light_dict['mani_light']
@@ -398,6 +398,7 @@ if __name__ == "__main__":
     parser.add_argument("--rotate_sh_axis", type=int, default=2, help="axis to rotate spherical harmonics coefficients, 0 for x, 1 for y, 2 for z")
     parser.add_argument("--scale_sh", type=float, default=1.0, help="scale factor for spherical harmonics coefficients")
     parser.add_argument("--img_ext", type=str, required=True, help="image extension in the sample pair json file, e.g., .jpg or .png")
+    parser.add_argument("--min_face_detection_confidence", type=float, default=0.5, help="min face detection confidence for MediaPipe FaceLandmarker")
     args = parser.parse_args()
 
 
@@ -434,6 +435,7 @@ if __name__ == "__main__":
     logger.info(f"[#] Number of frames to generate for self-drive: {args.num_frames}")
     logger.info(f"[#] Source image path: {args.source_path}")
     logger.info(f"[#] Save path: {args.save_path}")
+    logger.info(f'[#] Min face detection confidence: {args.min_face_detection_confidence}')
     logger.info("#" * 80)
 
     mani_light_dict = {
@@ -442,7 +444,7 @@ if __name__ == "__main__":
         "rotate_sh_axis": args.rotate_sh_axis,
         "scale_sh": args.scale_sh
     }
-    iv = InferImage(mani_light_dict=mani_light_dict)
+    iv = InferImage(mani_light_dict=mani_light_dict, min_face_detection_confidence=args.min_face_detection_confidence)
 
     to_run_idx = tqdm(to_run_idx, desc="Processing indices", total=len(to_run_idx), unit="index")
     for idx in to_run_idx:
