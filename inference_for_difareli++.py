@@ -97,7 +97,7 @@ class RelightablePA():
         self.pipeline = self.pipeline.to(device)
         self.pipeline.set_progress_bar_config(disable=False)
 
-    def portrait_animation_and_relighting(self, video_path, save_path, guidance, inference_steps, driving_mode="relighting"):
+    def portrait_animation_and_relighting(self, video_path, save_path, guidance, inference_steps, save_vid=True, driving_mode="relighting", eval_dict=None):
         os.makedirs(save_path, exist_ok=True)
         pixel_values = []
         pixel_head = []
@@ -211,24 +211,40 @@ class RelightablePA():
         out_frame_rt_256 = out_frame_256 + out_frame_256[::-1]
 
         # frames to vids using ffmpeg and subprocess
-        output_vid_name = ['out', 'ren', 'res']
-        for reso in ['512', '256']:
-            save_path_tmp = f'{save_path}/{reso}'
-            os.makedirs(save_path_tmp, exist_ok=True)
-            for i, fn in enumerate(['res_frame%03d.png', 'ren_frame%03d.png', 'out_frame%03d.png']):
-                input_pattern = f"{save_path_tmp}/{fn}"
-                output_path = f"{save_path_tmp}/{output_vid_name[i]}.mp4"
-                cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
-                # subprocess.run(cmd.split(' '), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
-                os.system(cmd)
+        if save_vid:
+            output_vid_name = ['out', 'ren', 'res']
+            for reso in ['512', '256']:
+                save_path_tmp = f'{save_path}/{reso}'
+                os.makedirs(save_path_tmp, exist_ok=True)
+                for i, fn in enumerate(['res_frame%03d.png', 'ren_frame%03d.png', 'out_frame%03d.png']):
+                    input_pattern = f"{save_path_tmp}/{fn}"
+                    output_path = f"{save_path_tmp}/{output_vid_name[i]}.mp4"
+                    cmd = f"ffmpeg -r 24 -i {input_pattern} -pix_fmt yuv420p -c:v libx264 {output_path} -y"
+                    # subprocess.run(cmd.split(' '), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,)
+                    os.system(cmd)
 
-        # save the roundtrip version (forward + reverse)
-
-        for reso in ['512', '256']:
-            save_path_tmp = f'{save_path}/{reso}'
-            vid_rt_list = [out_frame_rt, shading_frame_rt, res_frame_rt] if reso == '512' else [out_frame_rt_256, shading_frame_rt_256, res_frame_rt_256]
-            for i, vf in enumerate(vid_rt_list):
-                torchvision.io.write_video(video_array=vf, filename=f"{save_path_tmp}/{output_vid_name[i]}_rt.mp4", fps=24, video_codec='h264', options={'crf': '10'})
+            # save the roundtrip version (forward + reverse)
+            for reso in ['512', '256']:
+                save_path_tmp = f'{save_path}/{reso}'
+                vid_rt_list = [out_frame_rt, shading_frame_rt, res_frame_rt] if reso == '512' else [out_frame_rt_256, shading_frame_rt_256, res_frame_rt_256]
+                for i, vf in enumerate(vid_rt_list):
+                    torchvision.io.write_video(video_array=vf, filename=f"{save_path_tmp}/{output_vid_name[i]}_rt.mp4", fps=24, video_codec='h264', options={'crf': '17'})
+        
+        eval_dir = eval_dict["eval_dir"]
+        if eval_dir is not None:
+            src_id = eval_dict["src_id"]
+            dst_id = eval_dict["dst_id"]
+            for reso in ['256', '512']:
+                eval_save_dir = f"{eval_dir}/out/{reso}/"
+                os.makedirs(eval_save_dir, exist_ok=True)
+                if reso == '256':
+                    res_frame_ = res_frame_256
+                else:
+                    res_frame_ = res_frame
+                f_relit = res_frame_[-1]
+                os.makedirs(eval_save_dir, exist_ok=True)
+                Image.fromarray(np.uint8(f_relit)).save(f"{eval_save_dir}/input={src_id}#pred={dst_id}.png")
+                # torchvision.utils.save_image(tensor=f_relit, fp=f"{eval_save_dir}/input={src_id}#pred={dst_id}.png")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -244,6 +260,8 @@ if __name__ == "__main__":
     parser.add_argument("--video_path", type=str, required=True, help="reference and shading") 
     parser.add_argument("--save_path", type=str, default="result.mp4", help="result save path")
     parser.add_argument("--scale_sh", type=float, required=True, help="scale spherical harmonics coefficients for DiFaReli++ comparison")
+    parser.add_argument("--eval_dir", type=str, default=None, help="evaluation directory for DiFaReli++ comparison")
+    parser.add_argument("--save_vid", action='store_true', default=False, help="save video or not")
     
     '''
     Save into
@@ -290,6 +308,9 @@ if __name__ == "__main__":
     logger.info(f"[#] Save path: {args.save_path}")
     logger.info(f"[#] Running idx: {to_run_idx}")
     logger.info(f"[#] Sample json: {args.sample_pair_json}")
+    logger.info(f"[#] Scale SH: {args.scale_sh}")
+    logger.info(f"[#] Evaluation dir: {args.eval_dir}")
+    logger.info(f"[#] Save video: {args.save_vid}")
     logger.warning("Relipa's parameters...")
     logger.info(f"[#] Guidance: {args.guidance}")
     logger.info(f"[#] Inference steps: {args.inference_steps}")
@@ -314,5 +335,6 @@ if __name__ == "__main__":
                                                         save_path=save_path, 
                                                         guidance=args.guidance, 
                                                         inference_steps=args.inference_steps, 
-                                                        driving_mode=args.driving_mode)
-            
+                                                        driving_mode=args.driving_mode,
+                                                        save_vid=args.save_vid,
+                                                        eval_dict={"src_id": pair["src"], "dst_id": pair["dst"], "eval_dir": args.eval_dir})
